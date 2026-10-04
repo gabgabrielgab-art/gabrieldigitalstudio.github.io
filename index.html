@@ -1013,11 +1013,14 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   document.fonts && document.fonts.ready.then(() => ScrollTrigger.refresh());
 
   /* ---------- contact form ---------- */
-  // Delivered by FormSubmit (formsubmit.co) to CONTACT_EMAIL. Spam protection, in layers:
-  // honeypot field, minimum fill time, real human input, link/keyword filter, per-browser cooldown,
-  // plus FormSubmit's own blacklist. The first ever submission triggers a one-time activation email.
+  // Delivered by Web3Forms (web3forms.com) to the inbox registered with WEB3FORMS_KEY.
+  // The key is public by design (it only lets people send to that inbox). Until a key is set,
+  // or if sending ever fails, the visitor gets a ready-written email to CONTACT_EMAIL instead.
+  // Spam protection, in layers: honeypot field, minimum fill time, real human input,
+  // link/keyword filter, per-browser cooldown, plus Web3Forms' own spam filtering.
+  const WEB3FORMS_KEY = "";                // paste the access key from web3forms.com here
   const form = $("#lead"), note = $("#form-note"), sendBtn = $("#f-send");
-  const ENDPOINT = "https://formsubmit.co/ajax/" + CONTACT_EMAIL;
+  const ENDPOINT = "https://api.web3forms.com/submit";
   const MIN_FILL_MS = 4000, COOLDOWN_MS = 60000;
   const SPAM_WORDS = ["crypto", "bitcoin", "casino", "viagra", "backlink", "seo service", "guest post", "loan offer", "forex", "betting"];
   let shownAt = 0, humanInput = false;
@@ -1040,28 +1043,31 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
     if (Date.now() - lastSent() < COOLDOWN_MS) { say("Thanks, I’ve already got your message. Give it a minute before sending another.", true); return; }
 
     const needs = d.getAll("need").join(", ") || "Not specified";
+    const biz = (d.get("business") || "").trim();
     sendBtn.disabled = true; say("Sending…");
     try {
+      if (!WEB3FORMS_KEY) throw new Error("no form key yet");
       const r = await fetch(ENDPOINT, {
         method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          name, email, business: (d.get("business") || "").trim() || "-", needs, message: msg || "-",
-          _subject: "New project enquiry: " + ((d.get("business") || "").trim() || name),
-          _replyto: email, _template: "table", _captcha: "false", _honey: "",
-          _blacklist: SPAM_WORDS.join(", ")
+          access_key: WEB3FORMS_KEY,
+          subject: "New project enquiry: " + (biz || name),
+          from_name: "Gabriel Digital Studio website",
+          name, email, business: biz || "-", needs, message: msg || "-",
+          replyto: email, botcheck: false
         })
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok || String(j.success) === "false") throw new Error(j.message || "send failed");
+      if (!r.ok || j.success !== true) throw new Error(j.message || "send failed");
       try { localStorage.setItem("gds-form-sent", String(Date.now())); } catch (e) {}
       form.reset(); humanInput = false;
       say("Thanks, your details are on their way. I’ll reply within one business day.");
     } catch (err) {
       // never lose a lead: hand the visitor a ready-written email with everything they typed
-      const biz = (d.get("business") || "").trim();
       const body = `Hi Gabriel,\n\n${msg || "I'd like to talk about a project."}\n\nName: ${name}\nBusiness: ${biz || "-"}\nNeeds: ${needs}\nReply to: ${email}`;
       const mail = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("New project enquiry: " + (biz || name))}&body=${encodeURIComponent(body)}`;
-      say("The form couldn’t send just now. Tap below to send the same message by email; it’s already written for you.", true);
+      say(WEB3FORMS_KEY ? "The form couldn’t send just now. Tap below to send the same message by email; it’s already written for you."
+                        : "Almost there: tap below to send your message by email. It’s already written for you.", !!WEB3FORMS_KEY);
       const a = document.createElement("a");
       a.href = mail; a.className = "btn btn-primary mail-fallback"; a.textContent = "Email " + CONTACT_EMAIL;
       note.append(document.createElement("br"), a);

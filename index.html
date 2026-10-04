@@ -8,6 +8,7 @@
   /* Google Tag Manager, consent-first (UK GDPR / PECR): nothing from Google loads until "Accept".
      Consent Mode defaults are set first, so every tag inside the container also sees the choice. */
   window.GTM_ID = "GTM-WB452XDN";
+  window.GA_ID = "G-JVJPMNGBBX";          // GA4 is connected here, so don't also add a Google Tag for it inside GTM (it would double-count)
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
@@ -23,9 +24,20 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer',window.GTM_ID);
     /* End Google Tag Manager */
+    if (window.GA_ID) {
+      gtag("js", new Date());
+      gtag("config", window.GA_ID);
+      const sc = document.createElement("script");
+      sc.async = true; sc.src = "https://www.googletagmanager.com/gtag/js?id=" + window.GA_ID;
+      document.head.appendChild(sc);
+    }
   };
   // site events go to the dataLayer as {event: name, ...params} for GTM triggers
-  window.track = (name, params) => { if (window.gaLoaded) dataLayer.push(Object.assign({ event: name }, params)); };
+  window.track = (name, params) => {
+    if (!window.gaLoaded) return;
+    dataLayer.push(Object.assign({ event: name }, params));     // for GTM triggers
+    if (window.GA_ID) gtag("event", name, params || {});        // straight to GA4
+  };
   if (window.gaConsent === "yes") window.gaStart();
 </script>
 <title>Gabriel Digital Studio</title>

@@ -5,23 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#060B11">
 <script>
-  /* Google Analytics 4, consent-first (UK GDPR / PECR): gtag.js is only fetched after "Accept". */
-  window.GA_ID = "";                       // GA4 Measurement ID, e.g. "G-XXXXXXXXXX"
+  /* Google Tag Manager, consent-first (UK GDPR / PECR): nothing from Google loads until "Accept".
+     Consent Mode defaults are set first, so every tag inside the container also sees the choice. */
+  window.GTM_ID = "GTM-WB452XDN";
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
   window.gaConsent = (() => { try { return localStorage.getItem("gds-consent"); } catch (e) { return null; } })();
   window.gaStart = () => {
-    if (!window.GA_ID || window.gaLoaded) return;
+    if (!window.GTM_ID || window.gaLoaded) return;
     window.gaLoaded = true;
     gtag("consent", "update", { analytics_storage: "granted" });
-    gtag("js", new Date());
-    gtag("config", window.GA_ID, { anonymize_ip: true });
-    const sc = document.createElement("script");
-    sc.async = true; sc.src = "https://www.googletagmanager.com/gtag/js?id=" + window.GA_ID;
-    document.head.appendChild(sc);
+    /* Google Tag Manager */
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer',window.GTM_ID);
+    /* End Google Tag Manager */
   };
-  window.track = (name, params) => { if (window.gaLoaded) gtag("event", name, params || {}); };
+  // site events go to the dataLayer as {event: name, ...params} for GTM triggers
+  window.track = (name, params) => { if (window.gaLoaded) dataLayer.push(Object.assign({ event: name }, params)); };
   if (window.gaConsent === "yes") window.gaStart();
 </script>
 <title>Gabriel Digital Studio</title>
@@ -356,6 +360,10 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
 </style>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WB452XDN"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
 <div class="preloader" role="status" aria-live="polite">
   <div class="orb" aria-hidden="true"></div>
@@ -615,7 +623,7 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   /* ---------- analytics consent + events ---------- */
   const consentBox = $("#consent");
   const askConsent = () => consentBox.classList.add("show");
-  if (window.GA_ID && !window.gaConsent) setTimeout(askConsent, 2500);   // after the intro, not over it
+  if (window.GTM_ID && !window.gaConsent) setTimeout(askConsent, 2500);   // after the intro, not over it
   $$("[data-consent]", consentBox).forEach(b => b.addEventListener("click", () => {
     const yes = b.dataset.consent === "yes";
     try { localStorage.setItem("gds-consent", yes ? "yes" : "no"); } catch (e) {}
@@ -624,7 +632,7 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
     else if (window.gaLoaded) { gtag("consent", "update", { analytics_storage: "denied" }); location.reload(); }
   }));
   $("#cookie-settings").addEventListener("click", askConsent);
-  if (!window.GA_ID) $("#cookie-settings").hidden = true;
+  if (!window.GTM_ID) $("#cookie-settings").hidden = true;
   // which call-to-action people press, and where on the page
   document.addEventListener("click", e => {
     const a = e.target.closest("a.btn, .nav a");

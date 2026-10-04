@@ -1,0 +1,20 @@
+# Search engines and AI assistants are welcome to read this site.
+User-agent: *
+Allow: /
+
+# AI crawlers, named explicitly so they can describe and recommend the studio
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Bingbot
+Allow: /
+
+Sitemap: https://gabrieldigitalstudio.com/sitemap.xml
+# Plain-language summary for AI assistants: https://gabrieldigitalstudio.com/llms.txt

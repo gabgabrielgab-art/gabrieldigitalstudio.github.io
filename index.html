@@ -326,6 +326,7 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   .c,.rise,.svc-col .card{transition-duration:.01ms!important;transition-delay:0s!important}
   .marquee-track,.orb,.pulse i,.scroll-cue span{animation:none}
 }
+.mail-fallback{display:inline-flex;margin-top:12px;word-break:break-all}
 </style>
 </head>
 <body>
@@ -1056,7 +1057,14 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
       form.reset(); humanInput = false;
       say("Thanks, your details are on their way. I’ll reply within one business day.");
     } catch (err) {
-      say(`That didn’t send. Please email ${CONTACT_EMAIL} directly and I’ll reply within one business day.`, true);
+      // never lose a lead: hand the visitor a ready-written email with everything they typed
+      const biz = (d.get("business") || "").trim();
+      const body = `Hi Gabriel,\n\n${msg || "I'd like to talk about a project."}\n\nName: ${name}\nBusiness: ${biz || "-"}\nNeeds: ${needs}\nReply to: ${email}`;
+      const mail = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("New project enquiry: " + (biz || name))}&body=${encodeURIComponent(body)}`;
+      say("The form couldn’t send just now. Tap below to send the same message by email; it’s already written for you.", true);
+      const a = document.createElement("a");
+      a.href = mail; a.className = "btn btn-primary mail-fallback"; a.textContent = "Email " + CONTACT_EMAIL;
+      note.append(document.createElement("br"), a);
     } finally { sendBtn.disabled = false; }
   });
 })();

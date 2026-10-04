@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#060B11">
+<script>
+  /* Google Analytics 4, consent-first (UK GDPR / PECR): gtag.js is only fetched after "Accept". */
+  window.GA_ID = "";                       // GA4 Measurement ID, e.g. "G-XXXXXXXXXX"
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
+  window.gaConsent = (() => { try { return localStorage.getItem("gds-consent"); } catch (e) { return null; } })();
+  window.gaStart = () => {
+    if (!window.GA_ID || window.gaLoaded) return;
+    window.gaLoaded = true;
+    gtag("consent", "update", { analytics_storage: "granted" });
+    gtag("js", new Date());
+    gtag("config", window.GA_ID, { anonymize_ip: true });
+    const sc = document.createElement("script");
+    sc.async = true; sc.src = "https://www.googletagmanager.com/gtag/js?id=" + window.GA_ID;
+    document.head.appendChild(sc);
+  };
+  window.track = (name, params) => { if (window.gaLoaded) gtag("event", name, params || {}); };
+  if (window.gaConsent === "yes") window.gaStart();
+</script>
 <title>Gabriel Digital Studio</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cdefs%3E%3CradialGradient id=%27g%27 cx=%2740%25%27 cy=%2735%25%27 r=%2765%25%27%3E%3Cstop offset=%270%27 stop-color=%27%239ED8F5%27/%3E%3Cstop offset=%27.5%27 stop-color=%27%234F9BE8%27/%3E%3Cstop offset=%271%27 stop-color=%27%230D2238%27/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2728%27 fill=%27url(%23g)%27/%3E%3C/svg%3E">
 <meta name="description" content="Freelance web design, branding and local search for small businesses. From scattered to sharp in about four weeks.">
@@ -326,6 +346,12 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   .c,.rise,.svc-col .card{transition-duration:.01ms!important;transition-delay:0s!important}
   .marquee-track,.orb,.pulse i,.scroll-cue span{animation:none}
 }
+.consent{position:fixed;z-index:90;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);width:min(560px,calc(100% - 32px));display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:16px 18px;border:1px solid var(--line);border-radius:18px;background:rgba(6,11,17,.98);color:var(--ink);font:400 var(--t-sm)/1.5 var(--body);box-shadow:0 18px 60px rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .35s ease,transform .35s ease,visibility 0s .35s}
+.consent.show{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .35s ease,transform .35s ease}
+.consent p{flex:1 1 260px;margin:0}
+.consent .acts{display:flex;gap:10px}
+.consent .btn{padding:.75em 1.2em}
+.linkish{background:none;border:0;padding:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;display:inline-flex;align-items:center;min-height:44px}
 .mail-fallback{display:inline-flex;margin-top:12px;word-break:break-all}
 </style>
 </head>
@@ -540,12 +566,21 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
       <footer class="plate">
         <span>© <span id="yr"></span> Gabriel Digital Studio</span>
         <span>Websites · Branding · Local search</span>
+        <button type="button" class="linkish" id="cookie-settings">Cookie settings</button>
         <a href="#top">Back to top ↑</a>
       </footer>
     </div>
   </div>
 </main>
 </div></div>
+
+<div class="consent" id="consent" role="dialog" aria-live="polite" aria-label="Cookie choice">
+  <p>I use Google Analytics cookies to see which pages help small businesses most. No ads, no selling data. OK with you?</p>
+  <div class="acts">
+    <button type="button" class="btn btn-ghost" data-consent="no">No thanks</button>
+    <button type="button" class="btn btn-primary" data-consent="yes">Accept</button>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
@@ -576,6 +611,28 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   const SCRUB = true;                       // film + overlays track the (already smoothed) scroll exactly: no second easing layer
 
   $("#yr").textContent = new Date().getFullYear();
+
+  /* ---------- analytics consent + events ---------- */
+  const consentBox = $("#consent");
+  const askConsent = () => consentBox.classList.add("show");
+  if (window.GA_ID && !window.gaConsent) setTimeout(askConsent, 2500);   // after the intro, not over it
+  $$("[data-consent]", consentBox).forEach(b => b.addEventListener("click", () => {
+    const yes = b.dataset.consent === "yes";
+    try { localStorage.setItem("gds-consent", yes ? "yes" : "no"); } catch (e) {}
+    consentBox.classList.remove("show");
+    if (yes) window.gaStart();
+    else if (window.gaLoaded) { gtag("consent", "update", { analytics_storage: "denied" }); location.reload(); }
+  }));
+  $("#cookie-settings").addEventListener("click", askConsent);
+  if (!window.GA_ID) $("#cookie-settings").hidden = true;
+  // which call-to-action people press, and where on the page
+  document.addEventListener("click", e => {
+    const a = e.target.closest("a.btn, .nav a");
+    if (!a) return;
+    const where = a.closest("section[id], header, .plan")?.id || (a.closest(".plan") ? "pricing" : a.closest("header") ? "header" : "hero");
+    window.track(a.classList.contains("mail-fallback") ? "email_fallback_click" : "cta_click",
+      { cta_text: a.textContent.trim().replace(/\s*[→↑]$/, ""), cta_location: where, link_url: a.getAttribute("href") });
+  });
   $("#direct-email").textContent = CONTACT_EMAIL;
 
   /* split headings into characters for the reveal */
@@ -1060,6 +1117,7 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.success !== true) throw new Error(j.message || "send failed");
       try { localStorage.setItem("gds-form-sent", String(Date.now())); } catch (e) {}
+      window.track("generate_lead", { form: "contact", needs, currency: "GBP" });
       form.reset(); humanInput = false;
       say("Thanks, your details are on their way. I’ll reply within one business day.");
     } catch (err) {

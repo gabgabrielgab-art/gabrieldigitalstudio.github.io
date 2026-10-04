@@ -883,7 +883,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
   let T = TIERS[Q.get("tier")] || pickTier();
   const N = T.count;
-  const START = 34;                    // the film opens on frame 035 (frames 001-034 are skipped and never downloaded)
+  const START = 29;                    // the film opens on frame 030 (frames 001-029 are skipped and never downloaded)
   let imgs = new Array(N);             // encoded frame (Blob, or <img> on file://) per frame
   let allLoaded = false;
   const bmps = new Map();              // screen-sized GPU-ready bitmaps around the playhead

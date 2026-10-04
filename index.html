@@ -165,7 +165,7 @@ p{margin:0}
 .scatter::before,.process::before{background:linear-gradient(90deg,rgba(6,11,17,.9) 0,rgba(6,11,17,.72) 32%,rgba(6,11,17,.15) 55%,transparent 70%)}
 .rebuild::before{background:linear-gradient(to top,rgba(6,11,17,.92),rgba(6,11,17,.55) 30%,transparent 55%)}
 .services::before{background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(6,11,17,.45) 75%)}
-@media (min-width:981px){.services{padding-right:calc(var(--gutter) + 110px)}}
+@media (min-width:981px){.services{padding-right:calc(var(--gutter) + 165px)}}
 
 /* contrast: soft dark plates travel with every text block that sits on the film */
 /* no isolation: every plate joins the scene's own layer, behind ALL of the scene's text, so a plate can never cover a neighbouring block (they stack vertically on phones) */
@@ -174,7 +174,8 @@ p{margin:0}
 .stage :is(h1,h2,h3,p,li,.label,.stat span,.stat cite){text-shadow:0 1px 2px rgba(6,11,17,.7)}
 .site-header::before{content:"";position:absolute;inset:0 0 -60px;z-index:-1;background:linear-gradient(rgba(6,11,17,.82),rgba(6,11,17,.4) 60%,transparent);pointer-events:none}
 .site-header{isolation:isolate}
-.hud ul{padding:12px 14px;border-radius:14px;background:var(--glass);border:1px solid var(--line)}
+.hud ul{padding:12px 14px;border-radius:14px;background:var(--glass);border:1px solid var(--line);transition:opacity .25s ease,transform .25s ease}
+.hud ul.yield{opacity:0;transform:translateX(12px)}
 .readout{padding:9px 12px;border-radius:10px;background:var(--glass);border:1px solid var(--line)}
 ::placeholder{color:#8EA5B9;opacity:1}
 
@@ -935,6 +936,25 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
       q.el.style.zIndex = Math.round(depth * 10);
     });
   });
+
+  // 3b · the stage list steps aside whenever it would sit on top of any visible copy (any window size)
+  const hudList = $(".hud ul");
+  const hudBlockers = $$(".stage h1, .stage h2, .stage p, .stage .label, .stage .actions, .stage .stats, .stage .card, .stage .frag, .stage .steps, .stage .orbit span, .stage .biz-row");
+  let hudTick = 0;
+  gsap.ticker.add(() => {
+    if (++hudTick % 6) return;                       // ~10 checks a second is plenty
+    if (getComputedStyle(hud0).display === "none") return;
+    const h = hudList.getBoundingClientRect(), m = 16;
+    let hit = false;
+    for (const el of hudBlockers) {
+      const r = el.getBoundingClientRect();
+      if (!r.width || r.right < h.left - m || r.left > h.right + m || r.bottom < h.top - m || r.top > h.bottom + m) continue;
+      let o = 1, n = el; while (n && n !== document.body) { const cs = getComputedStyle(n); o *= +cs.opacity; if (cs.visibility === "hidden") { o = 0; break; } n = n.parentElement; }
+      if (o > 0.08) { hit = true; break; }
+    }
+    hudList.classList.toggle("yield", hit);
+  });
+  const hud0 = $(".hud");
 
   // 4 · hand-off: as the content sections arrive, fade the HUD and dim the film
   gsap.timeline({

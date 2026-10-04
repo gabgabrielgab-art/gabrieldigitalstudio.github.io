@@ -883,22 +883,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
   let T = TIERS[Q.get("tier")] || pickTier();
   const N = T.count;
+  const START = 37;                    // the film opens on frame 038 (frames 001-037 are skipped and never downloaded)
   let imgs = new Array(N);             // encoded frame (Blob, or <img> on file://) per frame
   let allLoaded = false;
   const bmps = new Map();              // screen-sized GPU-ready bitmaps around the playhead
   const thumbs = new Array(N);         // small bitmaps for every frame, always ready
   const TW = T === TIERS.p ? 300 : 800, TH = Math.round(TW * T.h / T.w);
   const decoding = new Set();
-  const play = { frame: 0, p: 0 };
+  const play = { frame: START, p: 0 };
   let liveVideo = null, dirty = true, lastKey = "", filmST = null;
   let drawW = T.w, drawH = T.h, gen = 0;   // cover size on screen; gen invalidates stale bitmaps
 
   const src = i => `${T.dir}/${String(i).padStart(3, "0")}.${T.ext}`;
 
-  // Scroll -> footage: every one of the 240 frames (24fps x 10s) is used, spread evenly over the film.
+  // Scroll -> footage: every frame from START to the last is used, spread evenly over the film.
   // The head-turn frames (8.0-9.6s) were deblurred in the master so they can all be shown.
-  const frameAt = u => Math.min(N - 1, Math.max(0, u * (N - 1)));
-  let shownFrame = 0;
+  const frameAt = u => Math.min(N - 1, Math.max(START, START + u * (N - 1 - START)));
+  let shownFrame = START;
 
   function sizeCanvas() {
     const dpr = LEVELS[level].dpr;
@@ -957,7 +958,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   function render() {
     if (liveVideo) {
-      const t = play.p * (liveVideo.duration - 0.05);
+      const t0 = START / N * liveVideo.duration, t = t0 + play.p * (liveVideo.duration - 0.05 - t0);
       if (Math.abs(liveVideo.currentTime - t) > 0.03 && !liveVideo.seeking) liveVideo.currentTime = t;
       if (dirty) { drawCover(liveVideo, liveVideo.videoWidth, liveVideo.videoHeight); dirty = false; }
       return;
@@ -988,7 +989,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     bmps.forEach(b => b.close && b.close()); bmps.clear();
     imgs = new Array(N);
     const c = Math.round(play.frame), order = [];
-    for (let d = 0; d < N; d++) { if (c + d < N) order.push(c + d); if (d && c - d >= 0) order.push(c - d); }
+    for (let d = 0; d < N; d++) { if (c + d < N) order.push(c + d); if (d && c - d >= START) order.push(c - d); }
     let k = 0;
     await Promise.all(Array.from({ length: 6 }, async () => {
       while (k < order.length) {
@@ -1078,10 +1079,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const order = [], seen = new Set();
     const push = i => { if (!seen.has(i)) { seen.add(i); order.push(i); } };
     const COARSE = T === TIERS.p ? 24 : 12;   // phones reveal after ~10 frames
-    push(0); for (let i = 0; i < N; i += COARSE) push(i); push(N - 1);
+    push(START); for (let i = START; i < N; i += COARSE) push(i); push(N - 1);
     const coarse = order.length;
-    [6, 3, 1].forEach(s => { for (let i = 0; i < N; i += s) push(i); });
-    if (!(await loadImg(0))) throw new Error("no frames");
+    [6, 3, 1].forEach(s => { for (let i = START; i < N; i += s) push(i); });
+    if (!(await loadImg(START))) throw new Error("no frames");
     let done = 1, next = 1;
     const worker = async () => {
       while (next < order.length) {
@@ -1095,7 +1096,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     await Promise.all(Array.from({ length: 6 }, worker));
     // repair pass: anything still missing after its retries gets another round once the network is quiet
     for (let round = 0; round < 3; round++) {
-      const missing = []; for (let i = 0; i < N; i++) if (!thumbs[i]) missing.push(i);
+      const missing = []; for (let i = START; i < N; i++) if (!thumbs[i]) missing.push(i);
       if (!missing.length) break;
       await wait(2000 * (round + 1));
       for (const i of missing) await loadImg(i);

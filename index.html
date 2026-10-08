@@ -338,7 +338,8 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   .card{padding:14px;border-radius:16px;gap:6px}
   .card p{display:none}
   .card h3{font-size:var(--t-sm)}
-  .hud{display:none}
+  .hud,.readout{display:none}
+  .frag:nth-child(n+4){display:none}   /* the lower tags land on the bottom-aligned copy on tablets */
   .promises{grid-template-columns:1fr 1fr}
   .promise:nth-child(3){padding-left:0;border-left:0}
   .promise:nth-child(n+3){border-top:1px solid var(--line)}
@@ -365,14 +366,66 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
 }
 /* ---------- phones ---------- */
 @media (max-width:560px){
-  /* broken-presence tags: kept on screen, above the headline, with a shorter drift */
-  .frag:nth-child(1){--x:42%!important;--y:14%!important;--dx:-14px!important;--dy:-10px!important}
-  .frag:nth-child(2){--x:58%!important;--y:20.5%!important;--dx:16px!important;--dy:-4px!important}
-  .frag:nth-child(3){--x:44%!important;--y:27%!important;--dx:-12px!important;--dy:6px!important}
+  /* broken-presence tags: in the flow, stacked just above the copy, so they can never land on the headline
+     whatever the screen height (fixed % positions overlapped the text on shorter phones) */
+  .frags{position:relative;inset:auto;display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:22px}
+  .frag{position:relative;left:auto;top:auto;transform:translate(calc(var(--k)*var(--dx)),calc(var(--k)*var(--dy))) rotate(calc(var(--k)*var(--r)))}
+  .frag:nth-child(1){--dx:-6px!important;--dy:-6px!important}
+  .frag:nth-child(2){--dx:10px!important;--dy:-2px!important;align-self:flex-end}
+  .frag:nth-child(3){--dx:-8px!important;--dy:4px!important;margin-left:8%}
   .frag{font-size:.72rem;padding:.55em .85em}
   .scatter-copy{gap:16px}
-  .stats{gap:14px 22px}
+  .stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 18px}
+  .stat{max-width:none}
 }
+/* shorter phones (iPhone SE, or any phone with the browser toolbars showing): trim so every stage fits */
+@media (max-width:560px) and (max-height:740px){
+  .scene{padding-top:calc(92px + env(safe-area-inset-top,0px))}
+  .frag:nth-child(3){display:none}
+  .frags{margin-bottom:14px}
+  .scatter-copy,.process-inner{gap:14px}
+  .scatter p.muted{font-size:var(--t-sm)}
+  .svc-head{top:calc(88px + env(safe-area-inset-top,0px))}
+  .steps li{padding:12px 0}
+}
+/* phones held sideways: very little height, so a compact two-column layout with smaller type */
+@media (max-height:500px) and (orientation:landscape){
+  .site-header{padding-top:calc(8px + env(safe-area-inset-top,0px))}
+  .brand{display:flex}
+  .brand small{display:none}
+  .site-header .btn{padding:.7em 1em}
+  .readout,.scroll-cue{display:none}
+  .stage{--t-2xl:clamp(1.5rem,4.4vw,2.2rem);--t-xl:clamp(1.15rem,3vw,1.5rem);--t-lg:1rem}
+  .scene{padding:calc(66px + env(safe-area-inset-top,0px)) max(var(--gutter),env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(var(--gutter),env(safe-area-inset-left,0px))}
+  .hero{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+  .hero-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px}
+  .hero-side{justify-self:end;gap:14px}
+  .hero h1{margin-top:10px}
+  .scatter,.process{align-content:center}
+  .scatter-copy{max-width:52%;gap:10px}
+  .scatter p.muted{font-size:var(--t-sm);line-height:1.45}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:0}
+  .stat b{font-size:1.4rem}
+  .stat cite{display:none}
+  .frag:nth-child(n+4){display:none}
+  .frag{font-size:.68rem}
+  /* keep the tags in the free right half, clear of the header, with a short drift */
+  .frag:nth-child(1){--x:74%!important;--y:36%!important;--dx:-16px!important;--dy:-8px!important}
+  .frag:nth-child(2){--x:78%!important;--y:56%!important;--dx:14px!important;--dy:4px!important}
+  .frag:nth-child(3){--x:73%!important;--y:76%!important;--dx:-12px!important;--dy:8px!important}
+  .rebuild-copy{gap:8px}
+  .svc-head{top:calc(60px + env(safe-area-inset-top,0px));gap:4px}
+  .services{gap:8px;align-content:end}
+  .card{padding:10px 12px;gap:2px}
+  .process-inner{max-width:62%;gap:10px}
+  .steps li{padding:7px 0}
+  .steps .wk,.steps p{display:none}
+  .scatter::before,.process::before{background:linear-gradient(90deg,rgba(6,11,17,.92) 0,rgba(6,11,17,.75) 45%,rgba(6,11,17,.15) 70%,transparent 85%)}
+}
+/* after the film, page content scrolls under the header: give it a solid backing so the logo never sits on text */
+.site-header::before{transition:background .3s}
+.site-header.solid::before{inset:0;background:rgba(6,11,17,.97);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.site-header.solid{padding-bottom:8px}
 /* touch devices: drop the per-letter blur in reveals (expensive on phone GPUs) */
 @media (hover:none){ .c{filter:none} }
 @media (prefers-reduced-motion:reduce){
@@ -1165,8 +1218,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // 3 · business types orbit the forming face
   const orbitSetters = orbitChips.map(el => ({
     x: gsap.quickSetter(el, "x", "px"), y: gsap.quickSetter(el, "y", "px"), z: gsap.quickSetter(el, "z", "px"),
-    r: gsap.quickSetter(el, "rotateY", "deg"), s: gsap.quickSetter(el, "scale"), o: gsap.quickSetter(el, "opacity"), el
-  }));
+    r: gsap.quickSetter(el, "rotateY", "deg"), sx: gsap.quickSetter(el, "scaleX"), sy: gsap.quickSetter(el, "scaleY"),
+    o: gsap.quickSetter(el, "opacity"), el
+  }));   // quickSetter can't take the "scale" shorthand (it threw on every frame), so x and y are set separately
   gsap.set(orbitChips, { xPercent: -50, yPercent: -50 });
   const rebuildCopy = $(".rebuild-copy"), hudPanel = $(".hud ul");
   const HEAD = { cx: 0.475, half: 0.22 };   // measured from the stage 3 frames, as fractions of the 16:9 frame width
@@ -1191,7 +1245,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const clear = headHalf + halfW + 20;                          // keep the whole pill off the face
       const off = smooth(clear - 24, clear + 24, Math.abs(x - headCx));
       q.x(x); q.y(y); q.z((depth - .5) * 120);
-      q.r(Math.cos(ang) * -18); q.s(.86 + depth * .18); q.o(o * off * (.55 + depth * .45));
+      q.r(Math.cos(ang) * -18); q.sx(.86 + depth * .18); q.sy(.86 + depth * .18); q.o(o * off * (.55 + depth * .45));
       q.el.style.zIndex = Math.round(depth * 10);
     });
   });
@@ -1223,6 +1277,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     .to(".stage", { autoAlpha: 0, duration: 0.6 }, 0)
     .to([".hud", ".readout"], { autoAlpha: 0, duration: 0.5 }, 0)
     .to(".dim", { opacity: AFTER_DIM, duration: 1 }, 0);
+  ScrollTrigger.create({ trigger: ".after", start: "top top", toggleClass: { targets: ".site-header", className: "solid" } });
 
   // 5 · content sections rise in as they enter
   const risers = [".block-head", ".promise", ".plan", "details", ".contact form"];

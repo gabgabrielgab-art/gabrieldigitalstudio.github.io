@@ -352,6 +352,9 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   .card{padding:14px;border-radius:16px;gap:6px}
   .card p{display:none}
   .card h3{font-size:var(--t-sm)}
+  .svc-grid{grid-auto-rows:1fr}
+  .card{height:100%}
+  .card .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .hud,.readout{display:none}
   .frag:nth-child(n+4){display:none}   /* the lower tags land on the bottom-aligned copy on tablets */
   .promises{grid-template-columns:1fr 1fr}
@@ -367,6 +370,10 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   .brand i{grid-row:span 2}
   .brand small{margin-left:0;font-size:.56rem}
   .site-header .btn{padding:.75em 1em}
+  /* stage 4 cards: every title reserves two lines, so all four boxes are the same size in every browser
+     (not only where the grid equalises the rows) */
+  .card h3{min-height:2.4em}
+  .card .meta{letter-spacing:.06em}
   .stats{gap:18px}
   .stat b{font-size:1.6rem}
   .row{grid-template-columns:1fr}

@@ -2,7 +2,8 @@
 # Recomputes the CSP script hashes in index.html. Run after editing any inline <script>.
 import re, hashlib, base64, sys
 p = sys.argv[1]; s = open(p, encoding='utf-8').read()
-bodies = re.findall(r'<script>(.*?)</script>', s, re.S)          # inline, untyped scripts only
+html = re.sub(r'<!--.*?-->', '', s, flags=re.S)                  # ignore comments (they may mention <script>)
+bodies = re.findall(r'<script>(.*?)</script>', html, re.S)       # inline, untyped scripts only
 hashes = ' '.join("'sha256-%s'" % base64.b64encode(hashlib.sha256(b.encode('utf-8')).digest()).decode() for b in bodies)
 csp = ("default-src 'self'; "
        f"script-src 'self' {hashes} https://www.googletagmanager.com; "

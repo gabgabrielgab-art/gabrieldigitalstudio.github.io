@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#060B11">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<!-- Security policy: only the scripts listed here may run. The two inline <script> blocks are allowed by hash,
+<!-- Security policy: only the scripts listed here may run. The two inline script blocks are allowed by hash,
      so after editing either one, run:  python3 tools/update-csp.py index.html  (or the page's JavaScript stops working) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-c6bP+fbpseB2uQTso/7lPkx13L9AR43acEyprBZRPy0=' 'sha256-dbaty24miT0USEyxsVpp3HRVPI/gw4QsU3rE1YfES3Q=' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://api.web3forms.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; media-src 'self'; frame-src https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-3jTC/w0pRriOXSZynXsYSPNKRXAKaFI1F2UEmixfJTM=' 'sha256-dbaty24miT0USEyxsVpp3HRVPI/gw4QsU3rE1YfES3Q=' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://api.web3forms.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; media-src 'self'; frame-src https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>
   /* clickjacking guard: GitHub Pages can't send X-Frame-Options, so refuse to run inside another site's frame */
   if (window.top !== window.self) {
@@ -200,6 +200,7 @@ p{margin:0}
 
 /* scene: services */
 .services{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gutter);align-content:center}
+.svc-grid{display:contents}   /* desktop: the two columns sit straight in the services grid */
 .svc-col{display:grid;gap:14px;align-content:center;width:min(340px,100%)}
 .svc-col.r{justify-self:end}
 .svc-head{position:absolute;top:calc(104px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;display:grid;gap:10px;justify-items:center;padding-inline:var(--gutter)}
@@ -343,9 +344,11 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   .site-header .btn{margin-left:auto}
   .hero-grid{grid-template-columns:1fr;gap:22px}
   .hero-side{justify-self:start}
-  .services{grid-template-columns:1fr 1fr;align-content:end;gap:10px}
-  .svc-col{width:100%;gap:10px}
-  .svc-col.r{justify-self:stretch}
+  /* one 2x2 grid (the two columns dissolve into it) so all four cards share the same width, height and row lines */
+  .services{grid-template-columns:minmax(0,1fr);align-content:end}
+  .svc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,1fr);grid-auto-flow:column;gap:10px}
+  .svc-col{display:contents}
+  .card{align-content:start}
   .card{padding:14px;border-radius:16px;gap:6px}
   .card p{display:none}
   .card h3{font-size:var(--t-sm)}
@@ -444,7 +447,8 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
   .frag:nth-child(3){--x:73%!important;--y:76%!important;--dx:-12px!important;--dy:8px!important}
   .rebuild-copy{gap:8px}
   .svc-head{top:calc(60px + env(safe-area-inset-top,0px));gap:4px}
-  .services{gap:8px;align-content:end}
+  .services{align-content:end}
+  .svc-grid{gap:8px}
   .card{padding:10px 12px;gap:2px}
   .process-inner{max-width:62%;gap:10px}
   .steps li{padding:7px 0}
@@ -716,6 +720,7 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
       <h2 class="split">Four things that make a small business look big.</h2>
       </div>
     </div>
+    <div class="svc-grid">
     <div class="svc-col">
       <article class="card" style="--side:-1;--d:.25s"><span class="meta">Web design</span><h3>A site that gets you calls</h3><p>Fast, mobile-first pages built around the one thing you want visitors to do: call, book or buy.</p></article>
       <article class="card" style="--side:-1;--d:.4s"><span class="meta">Brand identity</span><h3>A look that holds together</h3><p>Logo refresh, colours, type and a one-page brand guide so everything you hand out matches.</p></article>
@@ -723,6 +728,7 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
     <div class="svc-col r">
       <article class="card" style="--side:1;--d:.3s"><span class="meta">Local SEO</span><h3>Found on Google Maps</h3><p>A claimed and complete Google Business Profile, cleaned-up listings and a simple review routine.</p></article>
       <article class="card" style="--side:1;--d:.45s"><span class="meta">Social kit</span><h3>Posts that look pro</h3><p>Profile art, editable templates and photo direction, so posting takes five minutes, not an evening.</p></article>
+    </div>
     </div>
   </section>
 

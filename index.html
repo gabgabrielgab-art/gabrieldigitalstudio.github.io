@@ -4,7 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#060B11">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<!-- Security policy: only the scripts listed here may run. The two inline <script> blocks are allowed by hash,
+     so after editing either one, run:  python3 tools/update-csp.py index.html  (or the page's JavaScript stops working) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-c6bP+fbpseB2uQTso/7lPkx13L9AR43acEyprBZRPy0=' 'sha256-dbaty24miT0USEyxsVpp3HRVPI/gw4QsU3rE1YfES3Q=' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://api.web3forms.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; media-src 'self'; frame-src https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>
+  /* clickjacking guard: GitHub Pages can't send X-Frame-Options, so refuse to run inside another site's frame */
+  if (window.top !== window.self) {
+    document.documentElement.style.display = "none";
+    try { window.top.location.replace(window.self.location.href); } catch (e) {}
+  }
   /* Google Tag Manager, consent-first (UK GDPR / PECR): nothing from Google loads until "Accept".
      Consent Mode defaults are set first, so every tag inside the container also sees the choice. */
   window.GTM_ID = "GTM-WB452XDN";
@@ -622,10 +631,7 @@ footer a{text-decoration:none;display:inline-flex;align-items:center;min-height:
 </script>
 </head>
 <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WB452XDN"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+<!-- no GTM <noscript> iframe: it would track visitors with JavaScript off without ever asking for consent -->
 
 <div class="preloader" role="status" aria-live="polite">
   <div class="orb" aria-hidden="true"></div>
@@ -855,9 +861,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollSmoother.min.js"></script>
+<!-- GSAP is served from this site, not a public CDN: a compromised or hijacked CDN can't inject code here -->
+<script src="vendor/gsap-3.13.0/gsap.min.js"></script>
+<script src="vendor/gsap-3.13.0/ScrollTrigger.min.js"></script>
+<script src="vendor/gsap-3.13.0/ScrollSmoother.min.js"></script>
 <script>
 (() => {
   /* ---------- config: edit these ---------- */
@@ -940,7 +947,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   /* ---------- frame engine ---------- */
   const canvas = $("#scene"), ctx = canvas.getContext("2d", { alpha: false, desynchronized: new URLSearchParams(location.search).get("desync") === "1" });
   const Q = new URLSearchParams(location.search);          // diagnostics: ?dpr=1 ?fade=0 ?tier=hd
-  const DEVICE_DPR = Q.get("dpr") ? +Q.get("dpr") : Math.min(devicePixelRatio || 1, 2);
+  // URL parameters are untrusted (anyone can share a crafted link): clamp them to sane ranges
+  const num = (v, lo, hi, d) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+  const DEVICE_DPR = num(Q.get("dpr"), 0.5, 3, Math.min(devicePixelRatio || 1, 2));
   // quality ladder: the guard below steps down only if this device can't hold a smooth frame rate
   const LEVELS = [
     { dpr: DEVICE_DPR, fade: Q.get("fade") !== "0" },
@@ -954,7 +963,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const need = Math.max(innerWidth * DEVICE_DPR, innerHeight * DEVICE_DPR * 16 / 9);
     return need <= 2050 ? TIERS.hd : need <= 4000 ? TIERS.qhd : TIERS.uhd;   // true 4K only for 4K/5K monitors; laptops get 2560 (smoother, visually identical)
   }
-  let T = TIERS[Q.get("tier")] || pickTier();
+  let T = Object.prototype.hasOwnProperty.call(TIERS, Q.get("tier") || "") ? TIERS[Q.get("tier")] : pickTier();   // own keys only: ?tier=__proto__ must not reach Object.prototype
   const N = T.count;
   const START = 24;                    // the film opens on frame 025 (frames 001-024 are skipped and never downloaded)
   let imgs = new Array(N);             // encoded frame (Blob, or <img> on file://) per frame
@@ -1211,7 +1220,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // 2 · overlays: one master timeline, 1 unit long, positions mirror each scene's data-in/out
   const FADE = 0.035;
   // after the film the last frame stays as the backdrop, darkened by this much so all copy stays high-contrast
-  const AFTER_DIM = Q.get("dim") ? +Q.get("dim") : 0.4;
+  const AFTER_DIM = num(Q.get("dim"), 0, 1, 0.4);
   const tl = gsap.timeline({
     defaults: { ease: "none" },
     scrollTrigger: { trigger: "#film", start: "top top", end: "bottom bottom", scrub: SCRUB },
@@ -1352,7 +1361,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // or if sending ever fails, the visitor gets a ready-written email to CONTACT_EMAIL instead.
   // Spam protection, in layers: honeypot field, minimum fill time, real human input,
   // link/keyword filter, per-browser cooldown, plus Web3Forms' own spam filtering.
-  const WEB3FORMS_KEY = "14863e83-727f-4fee-9064-c0d560e3467a";  // Web3Forms access key for c-gabriel@outlook.com
+  const WEB3FORMS_KEY = "14863e83-727f-4fee-9064-c0d560e3467a";  // Web3Forms access key (public by design: it can only send to the registered inbox)
   const form = $("#lead"), note = $("#form-note"), sendBtn = $("#f-send");
   const ENDPOINT = "https://api.web3forms.com/submit";
   const MIN_FILL_MS = 4000, COOLDOWN_MS = 60000;
@@ -1366,7 +1375,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   form.addEventListener("submit", async e => {
     e.preventDefault();
     const d = new FormData(form);
-    const name = (d.get("name") || "").trim(), email = (d.get("email") || "").trim(), msg = (d.get("message") || "").trim();
+    // strip control characters (no line breaks smuggled into the email subject or headers) and cap lengths
+    const clean = (v, max, keepLines) => String(v || "").replace(keepLines ? /[\u0000-\u0009\u000B-\u001F\u007F]/g : /[\u0000-\u001F\u007F]/g, " ").trim().slice(0, max);
+    const name = clean(d.get("name"), 80), email = clean(d.get("email"), 120), msg = clean(d.get("message"), 2000, true);
     if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { say("Add your name and a valid email so I can reply.", true); return; }
 
     // silent rejections: bots get a normal-looking success so they don't adapt
@@ -1377,7 +1388,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if (Date.now() - lastSent() < COOLDOWN_MS) { say("Thanks, I’ve already got your message. Give it a minute before sending another.", true); return; }
 
     const needs = d.getAll("need").join(", ") || "Not specified";
-    const biz = (d.get("business") || "").trim();
+    const biz = clean(d.get("business"), 120);
     sendBtn.disabled = true; say("Sending…");
     try {
       if (!WEB3FORMS_KEY) throw new Error("no form key yet");
@@ -1388,7 +1399,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           subject: "New project enquiry: " + (biz || name),
           from_name: "Gabriel Digital Studio website",
           name, email, business: biz || "-", needs, message: msg || "-",
-          replyto: email, botcheck: false
+          replyto: email, botcheck: ""   // Web3Forms' own honeypot: must be empty for a real person
         })
       });
       const j = await r.json().catch(() => ({}));
